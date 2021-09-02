@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Priority Queues using Binary Heaps</title>
+    <link rel="stylesheet" href="../common.css" />
+  </head>
+
+  <body>
+    <main>
+      <section>
+        <h1>Priority Queues using Binary Heaps</h1>
+
+        <p>
+          Suppose you want to write a task scheduler with the following
+          properties: each task has a priority, tasks can be added in any order,
+          and tasks should be removed according to their priority. A simple
+          solution is to use an array and re-sort the elements every time a task
+          is added. However, sorting is a lot of work, and it's&mdash;perhaps
+          surprisingly&mdash;more work than needs to be done in this case. As
+          we'll see, we still require
+          <em>some</em> order, just not the <em>total</em> order of a sorted
+          array. What we need is a <em>binary heap</em>.
+        </p>
+
+        <img
+          src="./assets/scheduler.svg"
+          alt="An illustration of a scheduler"
+        />
+      </section>
+
+      <section>
+        <h2>Binary Heaps</h2>
+
+        <p>
+          &ldquo;Heap&rdquo; is unfortunately a rather ambiguous term, and
+          doubly so in computing. For our purposes, a heap is nothing more than
+          a binary tree with a special property. Specifically, a binary tree is
+          a heap if
+          <em>every parent node is greater than or equal to its children</em>.
+        </p>
+
+        <p>Here's a heap:</p>
+
+        <img src="./assets/heap1.svg" alt="An example heap" />
+
+        <p>And another:</p>
+
+        <img src="./assets/heap2.svg" alt="Another heap" />
+
+        <p>
+          Notice that in both cases, the greatest element (9) appears at the
+          root. This is always the case: the greatest element in a heap can't
+          have a parent, because each parent must be greater than or equal to
+          its children. So it must be at the root. Furthermore, each
+          <em>subtree</em> in the examples above has the heap property. This is
+          also a necessary property of heaps.
+        </p>
+
+        <p>Here are some trees that <em>don't</em> have the heap property:</p>
+
+        <img src="./assets/non-heap1.svg" alt="Not a heap" />
+
+        <img src="./assets/non-heap2.svg" alt="Another non-heap" />
+
+        <p>
+          In the first tree, 6 is a parent of 9, and 2 is a parent of 5. These
+          are two violations of the heap property. What about the second tree,
+          in which every parent is greater than or equal to its children? This
+          tree fails to satisfy an additional property that heaps must have that
+          we haven't yet mentioned. For reasons which will soon be made clear,
+          we want heaps to be nice and compact, so in addition to the
+          &ldquo;heap property&rdquo; outlined above, we also require that every
+          generation be &ldquo;filled&rdquo;, except for possibly the last.
+          Furthermore, if the last generation is not filled, we require that the
+          nodes in it be &ldquo;packed&rdquo; to the left.
+        </p>
+      </section>
+
+      <section>
+        <h2>Adding and Removing Elements</h2>
+
+        <p>
+          At this point, heaps appear to be little more than binary trees with
+          some rather arbitrary qualities. However, recall that the largest
+          element in a heap is always at the root. To return to our motivating
+          example (a scheduler), if we have a collection of tasks arranged in a
+          heap, then the highest priority task is always located at the root. To
+          return the highest priority task then, we simple remove and return the
+          root.
+        </p>
+
+        <img src="./assets/rm-root.svg" alt="Removing a heap's root element" />
+
+        <p>
+          But now we no longer have a heap. We'd like to combine the leftovers
+          into a <em>new</em> heap, so that the next time we want to remove the
+          highest priority task, we can simply pluck off the root as we did
+          here.
+        </p>
+
+        <p>
+          This is where the (perhaps arbitrary-seeming) heap property shines. We
+          first move the bottom-most, left-most element into the root position.
+        </p>
+
+        <img src="./assets/replace-root.svg" alt="Replacing the root" />
+
+        <p>
+          Now we've reconnected our tree, but the tree is <em>not</em> a heap.
+          To restore the heap property, we first compare the new root element
+          with its two children.
+        </p>
+
+        <img
+          src="./assets/compare-root.svg"
+          alt="Comparing the root with its children"
+        />
+
+        <p>
+          If it's smaller than either (and it's smaller than both in this case),
+          we swap it with its <em>larger</em> child (6).
+        </p>
+
+        <img
+          src="./assets/swap-root.svg"
+          alt="Swapping the root and its larger child"
+        />
+
+        <p>
+          We then continue, with our focus now on the subtree into which we
+          swapped the root. We compare the subtree's root (2) with its children
+          (1 and 1).
+        </p>
+
+        <img
+          src="./assets/compare-new-root.svg"
+          alt="Comparing the new root with its children"
+        />
+
+        <p>
+          But since the root is greater than or equal to both children, we stop.
+          We've successfully restored the heap property.
+        </p>
+
+        <p>
+          This process of repeatedly comparing the tree's root with its children
+          and swapping if necessary is called &ldquo;sifting down&rdquo;, and it
+          converts any &ldquo;compact&rdquo; (in the sense described above)
+          binary tree into a heap.
+        </p>
+
+        <p>
+          How does it work? After removing the root, we are left with two
+          disconnected subtrees, but these subtrees are themselves both
+          <em>heaps</em>. We then replaced the root with the bottom-most,
+          left-most element (the only reason we choose this element is because
+          it's the only one we can remove without destroying the tree's
+          &ldquo;compactness&rdquo;). If this new root is greater than or equal
+          to both its children, the new tree is a heap (since the root is
+          greater than its children, which are greater than their children, and
+          so on). If it's smaller than one of its children, we swap it with the
+          <em>greater</em> of its two children. After this swap, the greatest
+          element in the tree now sits at the root, and every element in the
+          &ldquo;unswapped&rdquo; subtree is smaller than the new root element.
+          Now only the &ldquo;swapped&rdquo; subtree needs to be re-heaped. We
+          stop when either the root is greater than or equal to its children, or
+          we reach the bottom of the tree.
+        </p>
+
+        <p>
+          In the worst case, how many iterations does this require? At most
+          <code>log(d)</code>, where <code>d</code> is the depth of the tree.
+          This is (potentially) <em>significantly</em> faster than re-sorting
+          all of the elements, which might take
+          <code>2<sup>d</sup>log(d)</code> steps.
+        </p>
+
+        <p>
+          How about adding new elements to a heap? We'll again need to re-heap
+          the tree, but this time starting with the added element. This process
+          is called &ldquo;sifting up&rdquo; and ought to have a familiar feel
+          to it.
+        </p>
+
+        <p>
+          We add new elements in the bottom-most, left-most position (starting a
+          new generation if necessary).
+        </p>
+
+        <img src="./assets/add-element.svg" alt="Adding an element to a heap" />
+
+        <p>We then compare the new element with its parent.</p>
+
+        <img
+          src="./assets/compare-parent.svg"
+          alt="Comparing the element with its parent"
+        />
+
+        <p>
+          If it's greater (as it is here), we swap the two; otherwise, we stop.
+        </p>
+
+        <img
+          src="./assets/swap-new-element.svg"
+          alt="Swapping the new element with its parent"
+        />
+
+        <p>We then repeat this process.</p>
+
+        <img
+          src="./assets/compare-swapped.svg"
+          alt="Comparing the swapped element with its parent"
+        />
+
+        <p>
+          This time, however, the element is not greater than its parent, so
+          we're done. The heap property has been restored.
+        </p>
+
+        <p>
+          Sifting up works for more-or-less the same reason that sifting-down
+          does. In particular, it relies heavily on the fact that subtrees of
+          heaps are themselves heaps. There's also a subtle point to be made
+          here. Notice how the first two example heaps contain the exact same
+          elements; they both have the heap property, and yet they're different
+          trees. Unlike sorted arrays, which are uniquely determined by their
+          elements, heaps permit a looser, more fluid organization. In a sense,
+          the heap property requires <em>just the right amount of order</em>. As
+          a result, re-heaping is quick.
+        </p>
+      </section>
+
+      <section>
+        <h2>A Compact Representation</h2>
+
+        <p>
+          Now that we understand the essential operations on heaps, we're ready
+          to think about representation. &ldquo;Compact&rdquo; binary trees,
+          like the ones we're concerned with here, permit a particular efficient
+          <a
+            href="https://en.wikipedia.org/wiki/Implicit_data_structure"
+            target="_blank"
+            ><em>implicit</em></a
+          >
+          representation. While a more general recursive representation will do,
+          the one we'll show here is far superior in terms of both memory usage,
+          cache-locality, and more.
+        </p>
+
+        <p>
+          Specifically, a &ldquo;compact&rdquo; binary tree&mdash;in which every
+          generation except for possibly the last is completely filled&mdash;can
+          be represented using nothing more than an array with one element for
+          each item in the tree. To encode a tree, its elements are stored in a
+          breadth-first order: first the root, then its two children, then the
+          nodes in the next generation, etc.
+        </p>
+
+        <p>
+          Here's the first example heap from above, along with its implicit
+          array representation:
+        </p>
+
+        <img
+          src="./assets/heap1-rep.svg"
+          alt="The first heap, represented as an array"
+        />
+
+        <p>
+          Using this represention, the left child of the node stored at index
+          <code>i</code> is located at index <code>2i + 1</code>, and the right
+          child at <code>2i + 2</code>. The parent of the node at index
+          <code>i</code> is located at index
+          <code>&#x230a;(i - 1) / 2&#x230b;</code>, where
+          <code>&#x230a;n&#x230b;</code> is the greatest integer less than or
+          equal to <code>n</code> (the &ldquo;floor&rdquo; function).
+        </p>
+
+        <p>
+          Consider the node whose value is 6. It's stored at index
+          <code>1</code>, so its children can be found at indexes
+          <code>2 * 1 + 1 = 3</code> and <code>2 * 1 + 2 = 4</code>. Likewise,
+          the node whose value is 2 is stored at index <code>5</code>, and its
+          parent&mdash;5&mdash;can be found at index
+          <code>&#x230a;(5 - 1) / 2&#x230b; = 2</code>.
+        </p>
+      </section>
+
+      <section>
+        <h2>An Implementation in TypeScript</h2>
+
+        <p>
+          We'll now work through an implementation in TypeScript (although any
+          language with mutable arrays will do). To start, let's create a file
+          called
+          <code>binary-heap.ts</code> and add a skeleton:
+        </p>
+
+        <pre><code class="hl-typescript">class BinaryHeap {
+  private elements: number[] = [];
+
+  isEmpty(): boolean {
+    throw new Error('unimplemented');
+  }
+
+  push(x: number) {
+    throw new Error('unimplemented');
+  }
+
+  peek(): number | null {
+    throw new Error('unimplemented');
+  }
+
+  pop(): number | null {
+    throw new Error('unimplemented');
+  }
+}</code></pre>
+
+        <p>
+          Note that we've decided to return
+          <code>null</code> in the event that a user <code>peek</code>s or
+          <code>pop</code>s an empty heap. Alternatively, we could throw an
+          error, or return something like Rust's <code>Option</code> type.
+        </p>
+
+        <p>
+          We'll store our heap using the <code>elements</code> array. Thus, to
+          check if the heap is empty, we simply need to check if the elements
+          array has length <code>0</code>:
+        </p>
+
+        <pre><code class="hl-typescript">isEmpty(): boolean {
+  return this.elements.length === 0;
+}</code></pre>
+
+        <p>
+          Let's tackle <code>pop</code> next. If the heap is empty, we'll simply
+          return <code>null</code>. If it's not, we need to store the element at
+          index <code>0</code> (this is the root), move the element at the last
+          index (this is the bottom-most, left-most node) to index
+          <code>0</code>, and &ldquo;sift down&rdquo;. Finally, we'll return the
+          previous root element.
+        </p>
+
+        <pre><code class="hl-typescript">class BinaryHeap {
+  // ...
+
+  pop(): number | null {
+    if (this.elements.length === 0) {
+      return null;
+    }
+
+    // Save the current root
+    const root = this.elements[0];
+
+    const last = this.elements.pop() as number;
+    if (root !== last) {
+      // Move the bottom-most, left-most node into the root's position
+      this.elements[0] = last;
+
+      // Sift down
+      this.siftDown();
+    }
+
+    return root;
+  }
+
+  private siftDown() {
+    throw new Error('unimplemented');
+  }
+
+  // ...
+}</code></pre>
+
+        <p>
+          Recall how <code>siftDown</code> works: we compare a parent node to
+          its children. If either of the children is greater than the parent, we
+          swap the parent with the <em>greater</em> of the two. We stop whenever
+          the current parent node is greater than or equal to its children (or
+          has no children). Here's what that looks like:
+        </p>
+
+        <pre><code class="hl-typescript">private siftDown() {
+  // Start at the root
+  let parentIndex = 0;
+
+  while (true) {
+    const lChildIndex = 2 * parentIndex + 1;
+    const rChildIndex = 2 * parentIndex + 2;
+
+    const parentValue = this.elements[parentIndex];
+    const lChildValue = this.elements[lChildIndex];
+    const rChildValue = this.elements[rChildIndex];
+
+    if (
+      (lChildValue && lChildValue > parentValue) ||
+      (rChildValue && rChildValue > parentValue)
+    ) {
+      // A swap is required
+      if (rChildValue && rChildValue > lChildValue) {
+        // Swap with right child
+        this.elements[rChildIndex] = parentValue;
+        this.elements[parentIndex] = rChildValue;
+        parentIndex = rChildIndex;
+      } else {
+        // Swap with left child
+        this.elements[lChildIndex] = parentValue;
+        this.elements[parentIndex] = lChildValue;
+        parentIndex = lChildIndex;
+      }
+    } else {
+      // The parent is greater than its children (or has none)
+      break;
+    }
+  }
+}</code></pre>
+
+        <p>
+          By way of a break, let's implement <code>peek</code> next. Since the
+          root is stored at index <code>0</code>, <code>peek</code> just needs
+          to return this value (or <code>null</code> if the heap is empty).
+        </p>
+
+        <pre><code class="hl-typescript">peek(): number | null {
+  if (this.elements.length === 0) {
+    return null;
+  }
+
+  return this.elements[0];
+}</code></pre>
+
+        <p>All that now remains is <code>push</code>:</p>
+
+        <pre><code class="hl-typescript">class BinaryHeap {
+  // ...
+
+  push(x: number) {
+    // Add the new element at the bottom-most, left-most position in the tree
+    this.elements.push(x);
+
+    // Then sift up
+    this.siftUp();
+  }
+
+  private siftUp() {
+    throw new Error('unimplemented');
+  }
+
+  // ...
+}</code></pre>
+
+        <p>Compared to <code>siftDown</code>, <code>siftUp</code> is easy:</p>
+
+        <pre><code class="hl-typescript">siftUp() {
+  // Start at the most recently added node
+  let focusedIndex = this.elements.length - 1;
+
+  while (focusedIndex > 0) {
+    const parentIndex = Math.floor((focusedIndex - 1) / 2);
+
+    const focusedValue = this.elements[focusedIndex];
+    const parentValue = this.elements[parentIndex];
+
+    if (focusedValue > parentValue) {
+      // A swap is required
+      this.elements[focusedIndex] = parentValue;
+      this.elements[parentIndex] = focusedValue;
+      focusedIndex = parentIndex;
+    } else {
+      // The focused node is not greater than its parent
+      break;
+    }
+  }
+}</code></pre>
+
+        <p>Here's the complete implementation:</p>
+
+        <pre><code class="hl-typescript">class BinaryHeap {
+  private elements: number[] = [];
+
+  isEmpty(): boolean {
+    return this.elements.length === 0;
+  }
+
+  push(x: number) {
+    this.elements.push(x);
+    this.siftUp();
+  }
+
+  private siftUp() {
+    let focusedIndex = this.elements.length - 1;
+
+    while (focusedIndex > 0) {
+      const parentIndex = Math.floor((focusedIndex - 1) / 2);
+
+      const focusedValue = this.elements[focusedIndex];
+      const parentValue = this.elements[parentIndex];
+
+      if (focusedValue > parentValue) {
+        this.elements[focusedIndex] = parentValue;
+        this.elements[parentIndex] = focusedValue;
+        focusedIndex = parentIndex;
+      } else {
+        break;
+      }
+    }
+  }
+
+  peek(): number | null {
+    if (this.elements.length === 0) {
+      return null;
+    }
+
+    return this.elements[0];
+  }
+
+  pop(): number | null {
+    if (this.elements.length === 0) {
+      return null;
+    }
+
+    const root = this.elements[0];
+    const last = this.elements.pop() as number;
+    if (root !== last) {
+      this.elements[0] = last;
+      this.siftDown();
+    }
+
+    return root;
+  }
+
+  private siftDown() {
+    let parentIndex = 0;
+
+    while (true) {
+      const lChildIndex = 2 * parentIndex + 1;
+      const rChildIndex = 2 * parentIndex + 2;
+
+      const parentValue = this.elements[parentIndex];
+      const lChildValue = this.elements[lChildIndex];
+      const rChildValue = this.elements[rChildIndex];
+
+      if (
+        (lChildValue && lChildValue > parentValue) ||
+        (rChildValue && rChildValue > parentValue)
+      ) {
+        if (rChildValue && rChildValue > lChildValue) {
+          this.elements[rChildIndex] = parentValue;
+          this.elements[parentIndex] = rChildValue;
+          parentIndex = rChildIndex;
+        } else {
+          this.elements[lChildIndex] = parentValue;
+          this.elements[parentIndex] = lChildValue;
+          parentIndex = lChildIndex;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+}</code></pre>
+      </section>
+
+      <section>
+        <h2>Generalizing the Element Type</h2>
+
+        <p>
+          At the moment, our <code>BinaryHeap</code> is not very useful. It can
+          only store numbers, whereas in many cases we'd like to store richer
+          types of things. Fortunately, it's not difficult to generalize our
+          current class to handle any type of element as long as it can be
+          compared.
+        </p>
+
+        <p>
+          First, let's parameterize our class by some type variable
+          <code>A</code>:
+        </p>
+
+        <pre><code class="hl-typescript">class BinaryHeap&lt;A&gt; {
+  // ...
+}</code></pre>
+
+        <p>
+          We need to update the type of the <code>elements</code> array: where
+          it previously stored only numbers, we'll now store
+          <code>&lt;A&gt;</code>s. We'll also have the user provide a comparator
+          function when constructing a heap, which we'll store for later use in
+          <code>siftUp</code> and <code>siftDown</code>.
+        </p>
+
+        <pre><code class="hl-typescript">class BinaryHeap&lt;A&gt; {
+  private elements: A[] = [];
+
+  constructor(private greaterThan: (x: A, y: A) => boolean) {}
+
+  // ...
+}</code></pre>
+
+        <p>
+          Now all that remains is to replace each appropriate occurrence of
+          <code>&gt;</code> with the user-provided
+          <code>greaterThan</code> function. We also need to update the
+          signatures of <code>push</code>, <code>pop</code>, and
+          <code>peek</code> to expect and return elements of type
+          <code>A</code>, instead of <code>number</code>s:
+        </p>
+
+        <pre><code class="hl-typescript">class BinaryHeap&lt;A&gt; {
+  private elements: A[] = [];
+
+  constructor(private greaterThan: (x: A, y: A) => boolean) {}
+
+  isEmpty(): boolean {
+    return this.elements.length === 0;
+  }
+
+  push(x: A) {
+    this.elements.push(x);
+    this.siftUp();
+  }
+
+  private siftUp() {
+    let focusedIndex = this.elements.length - 1;
+
+    while (focusedIndex > 0) {
+      const parentIndex = Math.floor((focusedIndex - 1) / 2);
+
+      const focusedValue = this.elements[focusedIndex];
+      const parentValue = this.elements[parentIndex];
+
+      if (this.greaterThan(focusedValue, parentValue)) {
+        this.elements[focusedIndex] = parentValue;
+        this.elements[parentIndex] = focusedValue;
+        focusedIndex = parentIndex;
+      } else {
+        break;
+      }
+    }
+  }
+
+  peek(): A | null {
+    if (this.elements.length === 0) {
+      return null;
+    }
+
+    return this.elements[0];
+  }
+
+  pop(): A | null {
+    if (this.elements.length === 0) {
+      return null;
+    }
+
+    const root = this.elements[0];
+    const last = this.elements.pop() as A;
+    if (root !== last) {
+      this.elements[0] = last;
+      this.siftDown();
+    }
+
+    return root;
+  }
+
+  private siftDown() {
+    let parentIndex = 0;
+
+    while (true) {
+      const lChildIndex = 2 * parentIndex + 1;
+      const rChildIndex = 2 * parentIndex + 2;
+
+      const parentValue = this.elements[parentIndex];
+      const lChildValue = this.elements[lChildIndex];
+      const rChildValue = this.elements[rChildIndex];
+
+      if (
+        (lChildValue && this.greaterThan(lChildValue, parentValue)) ||
+        (rChildValue && this.greaterThan(rChildValue, parentValue))
+      ) {
+        if (rChildValue && this.greaterThan(rChildValue, lChildValue)) {
+          this.elements[rChildIndex] = parentValue;
+          this.elements[parentIndex] = rChildValue;
+          parentIndex = rChildIndex;
+        } else {
+          this.elements[lChildIndex] = parentValue;
+          this.elements[parentIndex] = lChildValue;
+          parentIndex = lChildIndex;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+}</code></pre>
+
+        <p>Now, given some <code>Task</code> type, perhaps defined like so:</p>
+
+        <pre><code class="hl-typescript">interface Task {
+  priority: number;
+  name: string;
+}</code></pre>
+
+        <p>we can create a <code>BinaryHeap</code> capable of storing tasks.</p>
+
+        <pre><code class="hl-typescript">const heap = new BinaryHeap&lt;Task&gt;((t1, t2) => t1.priority > t2.priority);
+
+heap.push({ priority: 4, name: 'warning' });
+heap.push({ priority: 8, name: 'meltdown' });
+heap.push({ priority: 1, name: 'todo' });
+heap.push({ priority: 9, name: '!' });
+
+console.log(heap.pop()); // => { priority: 9, name: '!' }
+console.log(heap.pop()); // => { priority: 8, name: 'meltdown' }
+</code></pre>
+      </section>
+
+      <section>
+        <h2>A Real World Example</h2>
+
+        <p>
+          Binary heaps often appear in &ldquo;real-time&rdquo; systems in which
+          tasks are constantly created and need to be handled according to their
+          priority. As an example, React uses a
+          <a
+            href="https://github.com/facebook/react/blob/1314299c7f70914d61d8e1cef56767f112110674/packages/scheduler/src/SchedulerMinHeap.js"
+            target="_blank"
+            >binary heap</a
+          >
+          in its <code>scheduler</code> package. The scheduler determines when
+          various UI-related updates should be performed.
+        </p>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/bootleg-hl@latest"></script>
+  </body>
+</html>

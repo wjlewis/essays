@@ -1,0 +1,142 @@
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('./assets/SourceSansPro-Regular.ttf');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('./assets/SourceSansPro-SemiBold.ttf');
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Bold.ttf');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Fira Code';
+  src: url('./assets/FiraCode-Regular.ttf');
+  font-weight: 400;
+}
+
+:root {
+  --body-font: 'Open Sans', sans-serif;
+  --header-font: 'Merriweather', serif;
+  --code-font: 'Fira Code', monospace;
+  --text: #444;
+  --bg: #f0f0f0;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+html {
+  font-size: 16px;
+  font-family: var(--body-font);
+  line-height: 1.5;
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+body {
+  display: grid;
+  grid-template-columns: auto 42em auto;
+  grid-template-rows: 3em auto 3em;
+}
+
+main {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--header-font);
+  margin: 1.5em 0;
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  font-size: 1.5em;
+}
+
+h2 {
+  font-size: 1.3em;
+}
+
+p {
+  margin: 0.5em 0;
+}
+
+pre {
+  margin: 0;
+}
+
+code {
+  font-family: var(--code-font);
+}
+
+p code {
+  white-space: nowrap;
+}
+
+img {
+  display: block;
+  margin: 1em auto;
+  max-width: 100%;
+}
+
+@media screen and (max-width: 760px) {
+  html {
+    font-size: 11px;
+  }
+
+  body {
+    grid-template-columns: 10px auto 10px;
+    grid-template-rows: 1em auto 1em;
+  }
+}
+
+/* Syntax Highlighting */
+.comment {
+  font-style: italic;
+  color: #928374;
+}
+
+.ident {
+  color: #654735;
+}
+
+.kw {
+  color: #c14a4a;
+}
+
+.punc {
+  color: #654735;
+}
+
+.op {
+  color: #c35e0a;
+}
+
+.string {
+  color: #b47109;
+}
+
+.num {
+  color: #945e80;
+}
+
+.type {
+  color: #4c7a5d;
+}
